@@ -13,8 +13,28 @@ export default function Home() {
   const [editText, setEditText] = useState('');
 
   useEffect(() => {
-    fetchNotes();
-  }, []);
+
+    const channel = supabase
+      .channel('notes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notes'
+        },
+        (payload) => {
+          console.log('Change received!', payload)
+          fetchNotes()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+
+  }, [])
 
   async function fetchNotes() {
     setLoading(true);
@@ -22,7 +42,7 @@ export default function Home() {
       .from('notes')
       .select('*')
       .order('created_at', { ascending: false });
-    
+
     if (error) {
       console.error('Error fetching notes:', error);
       setError('Failed to fetch notes. Have you set the environment variables?');
@@ -40,7 +60,7 @@ export default function Home() {
     const { error } = await supabase
       .from('notes')
       .insert([{ text: newNote }]);
-    
+
     if (error) {
       console.error('Error inserting note:', error);
       setError('Failed to add note.');
@@ -95,7 +115,7 @@ export default function Home() {
   return (
     <main>
       <h1>Supabase Test App</h1>
-      
+
       {error && <div className="error">{error}</div>}
 
       <form onSubmit={addNote} className="add-form">
