@@ -1,10 +1,10 @@
-# Supabase Test App
+# Supabase Test App - Full CRUD
 
-This is a simple Next.js (App Router) application designed to test Supabase integration and deployment on Vercel.
+This is a simple Next.js (App Router) application designed to test full CRUD (Create, Read, Update, Delete) operations with Supabase and deployment on Vercel.
 
 ## Database Setup
 
-Run the following SQL in your Supabase project's SQL Editor to create the required table:
+Run the following SQL in your Supabase project's SQL Editor to create the required table and policies:
 
 ```sql
 create table notes (
@@ -17,6 +17,8 @@ create table notes (
 alter table notes enable row level security;
 create policy "Allow public insert" on notes for insert with check (true);
 create policy "Allow public select" on notes for select using (true);
+create policy "Allow public update" on notes for update using (true);
+create policy "Allow public delete" on notes for delete using (true);
 ```
 
 ## 1. Instructions to install dependencies
@@ -26,10 +28,10 @@ npm install
 ```
 
 ## 2. Instructions to run locally
-First, configure your environment variables. Open the `.env.local` file and add your Supabase credentials:
+First, configure your environment variables. Open the `.env.local` file (or create one in the root of the project) and add your Supabase credentials:
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url-here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
 ```
 
 Then, start the development server:
@@ -42,7 +44,7 @@ Initialize a git repository, commit the files, and push to your GitHub account:
 ```bash
 git init
 git add .
-git commit -m "Initial commit"
+git commit -m "Full CRUD implementation"
 git branch -M main
 git remote add origin https://github.com/your-username/your-repo.git
 git push -u origin main
