@@ -13,6 +13,7 @@ export default function Home() {
   const [editText, setEditText] = useState('');
 
   useEffect(() => {
+    fetchNotes();
 
     const channel = supabase
       .channel('notes-changes')
