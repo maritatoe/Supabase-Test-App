@@ -4,17 +4,44 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 export default function Home() {
+  const [session, setSession] = useState(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
+
   const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState('');
 
   useEffect(() => {
-    fetchNotes();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+      if (session) fetchNotes();
+    });
 
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        fetchNotes();
+      } else {
+        setNotes([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    
     const channel = supabase
       .channel('notes-changes')
       .on(
@@ -34,8 +61,41 @@ export default function Home() {
     return () => {
       supabase.removeChannel(channel)
     }
+  }, [session]);
 
-  }, [])
+  async function handleSignUp(e) {
+    if (e) e.preventDefault();
+    setAuthError(null);
+    const { error } = await supabase.auth.signUp({
+      email: authEmail,
+      password: authPassword,
+    });
+    if (error) setAuthError(error.message);
+    else alert('Signup successful! Please check your email for the login link or verify the account if needed.');
+  }
+
+  async function handleLogin(e) {
+    if (e) e.preventDefault();
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    });
+    if (error) setAuthError(error.message);
+  }
+
+  async function handleGoogleLogin() {
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) setAuthError(error.message);
+  }
+
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error('Error logging out:', error);
+  }
 
   async function fetchNotes() {
     setLoading(true);
@@ -113,9 +173,52 @@ export default function Home() {
     }
   }
 
+  if (authLoading) {
+    return <main><p className="loading">Checking authentication...</p></main>;
+  }
+
+  if (!session) {
+    return (
+      <main>
+        <h1>Supabase Test App</h1>
+        <h2>Login / Sign Up</h2>
+        {authError && <div className="error">{authError}</div>}
+        <form className="auth-form" onSubmit={(e) => e.preventDefault()}>
+          <input
+            type="email"
+            placeholder="Email"
+            value={authEmail}
+            onChange={(e) => setAuthEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={authPassword}
+            onChange={(e) => setAuthPassword(e.target.value)}
+            required
+          />
+          <div className="auth-buttons">
+            <button onClick={handleLogin} className="login-btn">Login</button>
+            <button onClick={handleSignUp} className="signup-btn">Sign Up</button>
+          </div>
+        </form>
+        <div className="oauth-section">
+          <p>Or</p>
+          <button onClick={handleGoogleLogin} className="google-btn">Login with Google</button>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main>
       <h1>Supabase Test App</h1>
+      
+      <div className="user-info">
+        <span>Logged in as: {session.user.email}</span>
+        <button onClick={handleLogout} className="logout-btn">Logout</button>
+      </div>
 
       {error && <div className="error">{error}</div>}
 

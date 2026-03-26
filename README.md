@@ -58,3 +58,16 @@ git push -u origin main
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 5. Click **Deploy**.
+
+## 5. Instructions to configure Google OAuth in Supabase
+1. Go to your Supabase project dashboard.
+2. Navigate to **Authentication** > **Providers**.
+3. Enable the **Google** provider.
+4. You will need a Client ID and Client Secret from the Google Cloud Console:
+   - Go to the [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a project, explicitly set up an OAuth consent screen.
+   - Go to **Credentials** > **Create Credentials** > **OAuth client ID** > **Web application**.
+   - Under **Authorized redirect URIs**, add your Supabase callback URL (you can find this URL in Supabase under Authentication > Providers > Google, formatted as `https://<project-ref>.supabase.co/auth/v1/callback`).
+5. Copy the Client ID and Client Secret into the Supabase Google Provider configuration and click **Save**.
+
+*Note: For Vercel deployments, ensure that your application domains (e.g., `your-app.vercel.app`) are listed as authorized domains in the Supabase Authentication > URL Configuration.*
